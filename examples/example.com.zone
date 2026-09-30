@@ -1,20 +1,40 @@
-$ORIGIN example.com.
-$TTL 300
+;
+; Example external authoritative zone
+;
 
-@ IN SOA ns1.example.com. hostmaster.example.com. (
-    2026093001 ; serial
-    3600       ; refresh
-    600        ; retry
-    604800     ; expire
-    300        ; negative cache TTL
+$ORIGIN example.com.
+$TTL 86400
+
+@       IN      SOA     ns1.example.com. hostmaster.example.com. (
+                2026093001      ; serial
+                3600            ; refresh
+                600             ; retry
+                1209600         ; expire
+                3600            ; negative cache TTL
 )
 
-@   IN NS   ns1.example.com.
-ns1 IN A    192.0.2.53
-ns1 IN AAAA 2001:db8::53
+        IN      NS      ns1.example.com.
+        IN      NS      ns2.example.com.
 
-www  IN A    192.0.2.80
-mail IN A    192.0.2.25
+ns1     IN      A       192.0.2.53
+ns2     IN      A       192.0.2.54
+
+@       IN      A       192.0.2.80
+www     IN      A       192.0.2.80
+mail    IN      A       192.0.2.25
+
+@       IN      MX      10 mail.example.com.
+@       IN      TXT     "v=spf1 a:mail.example.com -all"
+
+_dmarc  IN      TXT     "v=DMARC1; p=reject; adkim=r; aspf=r"
+
+@       IN      CAA     0 issue "letsencrypt.org"
 
 ; update_tlsa.sh writes this file in the same zone directory.
 $INCLUDE TLSAexample.com.key
+
+; Optional pattern when DNSKEY records are included explicitly in the source
+; zone. update_rrsig.sh itself only requires the DNSSEC key material to exist
+; in the zone directory for dnssec-signzone.
+; $INCLUDE Kexample.com.+013+12345.key
+; $INCLUDE Kexample.com.+013+67890.key
