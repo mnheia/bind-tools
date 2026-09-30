@@ -1,0 +1,14 @@
+$TTL 300
+@ IN SOA localhost. root.localhost. (
+    1       ; serial
+    3600    ; refresh
+    600     ; retry
+    604800  ; expire
+    300     ; negative cache TTL
+)
+
+@ IN NS localhost.
+@ IN A 0.0.0.0
+@ IN AAAA ::
+* IN A 0.0.0.0
+* IN AAAA ::
