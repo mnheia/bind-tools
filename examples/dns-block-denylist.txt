@@ -1,0 +1,3 @@
+# One domain per line.
+# Entries here are added even when they are absent from the downloaded feeds.
+bad.example
