@@ -38,7 +38,7 @@ need_cmd() {
 need_cmd dnssec-signzone
 need_cmd named-checkzone
 need_cmd named-checkconf
-ned_cmd rndc
+need_cmd rndc
 need_cmd openssl
 
 [ -x "$SERIAL_SCRIPT" ] || {
@@ -66,4 +66,39 @@ for DOM_NAME in "$@"; do
   [ -s "$DOM_FILE" ] || { echo "ERROR: zone file missing or empty: $DOM_FILE" >&2; exit 1; }
 
   echo "Validating unsigned zone before serial update"
-  ( cd "$DOM_PATH""bbæÖVBÖ6V6·¦öæR"DDôÕôäÔR""DDôÕôäÔR" ¢V6ò%WFFær4ô6W&Â ¢"E4U$Åõ45$B""DDôÕôdÄR  ¢V6ò%fÆFFærVç6væVB¦öæRgFW"6W&ÂWFFR ¢6B"DDôÕõD"bbæÖVBÖ6V6·¦öæR"DDôÕôäÔR""DDôÕôäÔR" ¢V6ò%6væær¦öæRG´DôÕôäÔWÒ ¢¢6B"DDôÕõD ¢Fç76V2×6vç¦öæRÔÓ2"E4ÅB"ÖR"²GµdÄEõ4T4ôäE7Ò"Öò"DDôÕôäÔR"Öb"EDÕõ4täTB"×B"DDôÕôäÔR ¢ ¢²×2"EDÕõ4täTB"ÒÇÂ²V6ò$U%$õ#¢6væVB¦öæRv2æ÷B7&VFVC¢EDÕõ4täTB"âc#²WB²Ð ¢V6ò%fÆFFær6væVB¦öæR ¢æÖVBÖ6V6·¦öæR"DDôÕôäÔR""EDÕõ4täTB  ¢b²×2"E4täTEôdÄR"Ó²FVà¢7Ö"E4täTEôdÄR""Gµ4täTEôdÄWÒæ&²âBFFR²UVÒVEòTTÒU2 ¢f ¢V6ò$ç7FÆÆær6væVB¦öæS¢E4täTEôdÄR ¢ç7FÆÂÖò&ö÷BÖr"D$äEôu$õU"ÖÒcCB"EDÕõ4täTB""E4täTEôdÄR ¦FöæP ¦V6ð¦V6ò%fÆFFær6ö×ÆWFR$äB6öæfr ¦æÖVBÖ6V6¶6öæb"D$äEô4ôäb  ¦V6ò%&VÆöFær$äB §&æF2&VÆö@ ¦V6ò$Då54T2%%4rWFFR6ö×ÆWFVB7V66W76gVÆÇ ¦V6ò#ÓÓÓÓÒBFFRÔ2fæ6VBDå54T2%%4rWFFRÓÓÓÓÒ 
+  ( cd "$DOM_PATH" && named-checkzone "$DOM_NAME" "$DOM_NAME" )
+
+  echo "Updating SOA serial"
+  "$SERIAL_SCRIPT" "$DOM_FILE"
+
+  echo "Validating unsigned zone after serial update"
+  ( cd "$DOM_PATH" && named-checkzone "$DOM_NAME" "$DOM_NAME" )
+
+  echo "Signing zone ${DOM_NAME}"
+  (
+    cd "$DOM_PATH"
+    dnssec-signzone       -A       -3 "$SALT"       -e "+${VALID_SECONDS}"       -o "$DOM_NAME"       -f "$TMP_SIGNED"       -t "$DOM_NAME"
+  )
+
+  [ -s "$TMP_SIGNED" ] || { echo "ERROR: signed zone was not created: $TMP_SIGNED" >&2; exit 1; }
+
+  echo "Validating signed zone"
+  named-checkzone "$DOM_NAME" "$TMP_SIGNED"
+
+  if [ -s "$SIGNED_FILE" ]; then
+    cp -a "$SIGNED_FILE" "${SIGNED_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+  fi
+
+  echo "Installing signed zone: $SIGNED_FILE"
+  install -o root -g "$BIND_GROUP" -m 0644 "$TMP_SIGNED" "$SIGNED_FILE"
+done
+
+echo
+echo "Validating complete BIND config"
+named-checkconf "$BIND_CONF"
+
+echo "Reloading BIND"
+rndc reload
+
+echo "DNSSEC RRSIG update completed successfully"
+echo "===== $(date -Is) finished DNSSEC RRSIG update ====="
