@@ -1,0 +1,20 @@
+$ORIGIN example.com.
+$TTL 300
+
+@ IN SOA ns1.example.com. hostmaster.example.com. (
+    2026093001 ; serial
+    3600       ; refresh
+    600        ; retry
+    604800     ; expire
+    300        ; negative cache TTL
+)
+
+@   IN NS   ns1.example.com.
+ns1 IN A    192.0.2.53
+ns1 IN AAAA 2001:db8::53
+
+www  IN A    192.0.2.80
+mail IN A    192.0.2.25
+
+; update_tlsa.sh writes this file in the same zone directory.
+$INCLUDE TLSAexample.com.key
