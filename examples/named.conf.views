@@ -1,0 +1,40 @@
+// Example split-DNS layout using BIND views.
+//
+// Replace the example networks and zone include files with your own layout.
+// The important part for dns_block_list.sh is that named.conf.blocked is
+// included only in the recursive/internal view.
+
+acl "internal" {
+    192.0.2.0/24;
+};
+
+acl "trusted" {
+    192.0.2.10;
+};
+
+view "internal-view" {
+    match-clients { internal; trusted; };
+    allow-query { internal; trusted; };
+
+    recursion yes;
+    allow-recursion { internal; trusted; };
+    allow-query-cache { internal; trusted; };
+
+    include "/etc/bind/named.conf.default-zones";
+    include "/etc/bind/named.conf.internal-zones";
+
+    // Generated DNS block zones for internal recursive clients.
+    include "/etc/bind/named.conf.blocked";
+};
+
+view "external-view" {
+    match-clients { any; };
+    allow-query { any; };
+
+    recursion no;
+    allow-recursion { none; };
+    allow-query-cache { none; };
+
+    include "/etc/bind/named.conf.default-zones";
+    include "/etc/bind/named.conf.external-zones";
+};
