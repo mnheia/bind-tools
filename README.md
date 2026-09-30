@@ -21,6 +21,15 @@ Default files:
 
 All paths, the BIND service/group and minimum entry threshold can be overridden with environment variables.
 
+### BIND configuration examples
+The `examples/` directory contains the minimal BIND wiring used by the block-list script:
+
+- `named.conf.blocked.include` shows how to include the generated zone declarations from BIND configuration.
+- `blocked.zone` is a shared sinkhole zone file used by every generated blocked-domain zone.
+- `dns-block-allowlist.txt` and `dns-block-denylist.txt` show the optional local override files.
+
+A typical installation copies `blocked.zone` to `/etc/bind/blocked.zone`, creates the generated `/etc/bind/named.conf.blocked`, and adds the include line to `named.conf.local` or another file already loaded by BIND.
+
 The source feeds are downloaded at runtime and remain subject to their respective upstream terms and licenses.
 
 ### update_zone_serial.sh
