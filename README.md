@@ -1,0 +1,78 @@
+Copyright (c) 2026, Mnheia <mnheia@gmail.com>
+
+# bind-tools
+Bash utilities for BIND DNS administration, blocklists, DNSSEC signing, TLSA/DANE records and SOA serial maintenance.
+
+## Scripts
+
+### dns_block_list.sh
+Downloads multiple public hosts/block lists, normalizes and deduplicates domains, applies optional allow/deny lists, generates BIND zone declarations, validates the candidate configuration and reloads BIND only after validation succeeds.
+
+The existing configuration is kept when all downloads fail, the generated list is suspiciously small, validation fails or BIND cannot be reloaded safely.
+
+Default files:
+
+```text
+/etc/bind/named.conf.blocked
+/etc/bind/blocked.zone
+/etc/bind/dns-block-allowlist.txt
+/etc/bind/dns-block-denylist.txt
+```
+
+All paths, the BIND service/group and minimum entry threshold can be overridden with environment variables.
+
+The source feeds are downloaded at runtime and remain subject to their respective upstream terms and licenses.
+
+### update_zone_serial.sh
+Updates the SOA serial in one or more zone files. The new serial is the greater of the existing serial plus one or the current `YYYYMMDD01` value.
+
+```bash
+./update_zone_serial.sh /etc/bind/zones/example.com
+```
+
+### update_rrsig.sh
+Updates a zone serial, validates the unsigned zone, signs it with `dnssec-signzone`, validates the signed zone and reloads BIND after all requested zones are processed.
+
+It expects a directory layout like:
+
+```text
+/etc/bind/zones/external/example.com/example.com
+```
+
+Run it with zone names:
+
+```bash
+sudo ./update_rrsig.sh example.com example.net
+```
+
+Override `DNS_ROOT`, `BIND_CONF`, `BIND_GROUP` or `VALID_DAYS` when required.
+
+### update_tlsa.sh
+Generates TLSA records for one or more `hostname:port` endpoints, automatically finds the matching local zone by walking DNS suffixes, installs a per-zone TLSA include file, validates the zone and then calls `update_rrsig.sh` for the affected zones.
+
+```bash
+sudo ./update_tlsa.sh mail.example.com:25 cloud.example.com:443
+```
+
+The script uses the `tlsa` command with DANE-EE usage 3, selector 1 and SHA-256 matching. `--insecure` is intentional when retrieving the endpoint certificate because TLSA generation must not depend on normal PKIX trust validation.
+
+## Requirements
+Depending on the script:
+
+- BIND 9 tools: `named-checkconf`, `named-checkzone`, `rndc`, `dnssec-signzone`
+- `openssl`
+- `wget`
+- `flock`
+- `systemctl`
+- `tlsa` from a compatible TLSA/DANE utility package
+- standard GNU/Linux utilities
+
+DNSSEC signing assumes the appropriate DNSSEC key material already exists in the zone directory.
+
+TLSA generation assumes the zone file already includes the generated `TLSA<zone>.key` file, or otherwise loads it in your BIND configuration.
+
+## Safety
+These tools validate candidate zone/configuration data before reloading BIND and create backups where appropriate. They still modify production DNS files, so review the configured paths and test on your own zone layout first.
+
+## Bugs
+Please report bugs or feature requests through the web interface at https://github.com/mnheia/bind-tools/issues
