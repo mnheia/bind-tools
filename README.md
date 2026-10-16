@@ -1,4 +1,4 @@
-Copyright (c) 2026, Mnheia <mnheia@gmail.com>
+Copyright (c) 2026 mnheia
 
 # bind-tools
 Bash utilities for BIND DNS administration, blocklists, DNSSEC signing, TLSA/DANE records and SOA serial maintenance.
